@@ -103,9 +103,7 @@ function ForensicDashboard() {
           <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 700 }}>Forensic Workspace</h1>
           <p className="page-subtext">Welcome, {currentUser?.name || "Forensic Officer"} · Evidence extraction &amp; analysis workspace.</p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate("/reports")}>
-          <FileCheck size={16} /> My Reports
-        </button>
+        
       </div>
 
       <div className="grid-3">
@@ -186,35 +184,10 @@ function JudicialDashboard() {
           <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 26, fontWeight: 700 }}>Judicial Review Dashboard</h1>
           <p className="page-subtext">Welcome, {currentUser?.name || "Justice Malhotra"} · High Court Registry &amp; Case Review</p>
         </div>
-        <button className="btn btn-primary" onClick={() => navigate("/my-uploads")}>
-          <UploadCloud size={16} /> My Court Filings
-        </button>
+        
       </div>
 
-      <div className="card" style={{ background: "var(--navy)", color: "#fff" }}>
-        <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 18, color: "var(--gold)", marginBottom: 8 }}>
-          Instant Case Record Search
-        </h2>
-        <p style={{ fontSize: 12.5, color: "#9AA5B1", marginBottom: 14 }}>
-          Search cases by Case ID to inspect FIRs, Witness Statements, Evidence, and attach Court Orders.
-        </p>
-
-        <form onSubmit={handleSearchSubmit} style={{ display: "flex", gap: 10 }}>
-          <div className="topbar-search" style={{ flex: 1 }}>
-            <Search size={15} />
-            <input
-              type="text"
-              placeholder="Enter Case ID (e.g. CASE-2026-001)..."
-              value={searchId}
-              onChange={(e) => setSearchId(e.target.value)}
-              style={{ width: "100%", background: "#fff", color: "var(--text)" }}
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" style={{ background: "var(--gold)", color: "var(--navy)" }}>
-            Search Cases
-          </button>
-        </form>
-      </div>
+      
 
       <div className="card">
         <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 700, marginBottom: 16 }}>

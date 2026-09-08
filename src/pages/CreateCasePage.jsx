@@ -17,7 +17,7 @@ const DOCUMENT_CATEGORIES = [
   { id: "witness", name: "Witness Statements", sub: "Click to Upload", accept: ".pdf,.doc,.docx" },
   { id: "evidence", name: "Evidence Documents", sub: "Click to Upload", accept: "*" },
   { id: "investigation", name: "Investigation Documents", sub: "Click to Upload", accept: ".pdf" },
-  { id: "courtdocuments", name: "Court Documents", sub: "Click to Upload", accept: "*" },
+  { id: "chargesheet", name: "Charge Sheet", sub: "Click to Upload", accept: "*" },
   { id: "other", name: "Other Documents", sub: "Click to Upload", accept: "*" },
 ];
 
@@ -38,7 +38,7 @@ export default function CreateCasePage() {
     witness: [],
     evidence: [],
     investigation: [],
-    courtdocuments: [],
+    chargesheet: [],
     other: [],
   });
 
@@ -113,9 +113,7 @@ export default function CreateCasePage() {
 
   return (
     <div className="stack animate-fade-in" style={{ maxWidth: 960, margin: "0 auto" }}>
-      <button className="back-link" onClick={() => navigate("/cases")}>
-        <ArrowLeft size={15} /> Back to My Cases
-      </button>
+     
 
       {successMessage && (
         <div className="card row" style={{ background: "var(--success-bg)", border: "1px solid var(--success-border)", color: "var(--success)" }}>

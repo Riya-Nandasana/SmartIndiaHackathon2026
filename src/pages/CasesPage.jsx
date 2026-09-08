@@ -30,11 +30,7 @@ export default function CasesPage() {
           <p className="page-subtext">Manage, register, and monitor all active case files and document repositories.</p>
         </div>
 
-        {isLegalOfficer && (
-          <button className="btn btn-primary" onClick={() => navigate("/cases/new")}>
-            <Plus size={16} /> Create New Case
-          </button>
-        )}
+       
       </div>
 
       <div className="card row" style={{ gap: 14, padding: "16px 24px" }}>

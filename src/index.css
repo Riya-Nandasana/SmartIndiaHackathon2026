@@ -319,6 +319,69 @@ a {
   flex: 1;
 }
 
+/* ---------------------------------------------------------
+   Sidebar (new menuByRole version — logo + item classes)
+   --------------------------------------------------------- */
+.sidebar-logo {
+  padding: 20px 24px;
+  border-bottom: 1px solid #1c2531;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-brand-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-logo h2 {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: #fff;
+  margin: 0;
+}
+
+.sidebar-close-btn {
+  display: none;
+  color: #9AA5B1;
+  border-radius: var(--radius-sm);
+  padding: 6px;
+}
+
+.sidebar-close-btn:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: #9AA5B1;
+  border-left: 3px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease;
+  margin-bottom: 2px;
+}
+
+.sidebar-item:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.sidebar-item.active {
+  color: var(--gold);
+  background: var(--navy);
+  border-left-color: var(--gold);
+}
+
 .sidebar-link {
   display: flex;
   align-items: center;
@@ -1389,5 +1452,242 @@ table.data-table {
 
   50% {
     opacity: 0.35;
+  }
+}
+
+/* ---------------------------------------------------------
+   Evidence Page
+--------------------------------------------------------- */
+
+.evidence-record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding: 16px;
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+
+  background: var(--bg);
+
+  transition: transform 0.15s ease,
+              box-shadow 0.15s ease,
+              border-color 0.15s ease;
+}
+
+.evidence-record:hover {
+  transform: translateY(-2px);
+  border-color: var(--gold);
+  box-shadow: var(--shadow-sm);
+}
+
+.evidence-record-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.evidence-record-icon {
+  width: 42px;
+  height: 42px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: var(--radius-sm);
+
+  background: var(--navy);
+  color: var(--gold);
+
+  border: 1px solid rgba(201, 169, 110, 0.35);
+}
+
+.evidence-record-info {
+  min-width: 0;
+}
+
+.evidence-record-name {
+  font-size: 13px;
+  font-weight: 700;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidence-record-meta {
+  font-size: 11px;
+  color: var(--subtext);
+  margin-top: 4px;
+}
+
+.evidence-record-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  flex-shrink: 0;
+}
+
+
+/* Evidence page header */
+
+.evidence-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 10px 14px;
+
+  background: #fff;
+  border: 1px solid var(--border);
+
+  border-radius: var(--radius-sm);
+
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+/* ---------------------------------------------------------
+   Upload Court Document
+--------------------------------------------------------- */
+
+.upload-file-preview {
+  margin-top: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  padding: 12px 14px;
+
+  background: var(--bg);
+
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.upload-file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-width: 0;
+}
+
+.upload-file-name {
+  font-size: 13px;
+  font-weight: 700;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-file-size {
+  font-size: 11px;
+  color: var(--subtext);
+  margin-top: 2px;
+}
+
+.upload-security-notice {
+  background: var(--amber-bg);
+  border: 1px solid var(--amber-border);
+}
+
+.upload-security-content {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.upload-security-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+.upload-security-text {
+  font-size: 12px;
+  color: var(--subtext);
+  margin-top: 4px;
+}
+
+
+/* ---------------------------------------------------------
+   Responsive
+--------------------------------------------------------- */
+
+@media (max-width: 768px) {
+
+  .evidence-record {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .evidence-record-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .evidence-summary {
+    margin-top: 12px;
+  }
+
+  .upload-file-preview {
+    flex-wrap: wrap;
+  }
+
+  .hamburger-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+
+  .hamburger-btn:hover {
+    color: var(--gold);
+    background: rgba(201, 169, 110, 0.12);
+  }
+
+  @media (max-width: 900px) {
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sidebar-close-btn {
+      display: flex;
+    }
+
+    .topbar,
+    .page-content {
+      margin-left: 0;
+    }
+
+    .sidebar-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(16, 21, 28, 0.6);
+      backdrop-filter: blur(2px);
+      z-index: 45;
+    }
   }
 }
