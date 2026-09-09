@@ -36,9 +36,17 @@ import AssignForensicPage from "./pages/AssignForensicPage";
 
 
 function ProtectedRoute({ children }) {
-  const { currentUser } = useApp();
+  const { currentUser, token, authChecked } = useApp();
 
-  if (!currentUser) {
+  if (!authChecked) {
+    return (
+      <div style={{ minHeight: "100vh", display: "grid", placeItems: "center", color: "var(--subtext)" }}>
+        Loading session…
+      </div>
+    );
+  }
+
+  if (!token || !currentUser) {
     return <Navigate to="/login" replace />;
   }
 
