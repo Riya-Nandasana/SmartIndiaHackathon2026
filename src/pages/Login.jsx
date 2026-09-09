@@ -10,8 +10,10 @@ import {
   CheckCircle2,
   Lock,
   RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import { useApp } from "../context/AppContext";
+import { getErrorMessage } from "../api/client";
 
 const ROLE_GOV_IDS = {
   "Legal Officer": "GOV-IND-2026-9812",
@@ -27,60 +29,78 @@ const ROLE_MOBILES = {
   Administrator: "+91 98765 43213",
 };
 
-const ROLE_NAMES = {
-  "Legal Officer": "Raj Mehta",
-  "Forensic Officer": "Dr. Ananya Patel",
-  "Court Authority": "Justice Vikram Malhotra",
-  Administrator: "System Admin",
-};
-
 export default function Login() {
-  const { login } = useApp();
+  const { loginWithBackend, verifyOtpWithBackend } = useApp();
   const navigate = useNavigate();
 
   const [role, setRole] = useState("Legal Officer");
   const [govId, setGovId] = useState(ROLE_GOV_IDS["Legal Officer"]);
   const [mobile, setMobile] = useState(ROLE_MOBILES["Legal Officer"]);
-  const [step, setStep] = useState(1); // 1: Details & Send OTP, 2: Enter OTP
-  const [otp, setOtp] = useState("884920");
-  const [otpSent, setOtpSent] = useState(false);
+  const [step, setStep] = useState(1);
+  const [otp, setOtp] = useState("");
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleRoleSelect = (selectedRole) => {
     setRole(selectedRole);
     setGovId(ROLE_GOV_IDS[selectedRole]);
     setMobile(ROLE_MOBILES[selectedRole]);
+    setErrorMsg("");
   };
 
-  const handleSendOtp = (e) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!govId || !mobile) {
-      alert("Please enter Government ID and Mobile Number.");
+      setErrorMsg("Please enter Government ID and Mobile Number.");
       return;
     }
-    setOtpSent(true);
-    setStep(2);
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      const res = await loginWithBackend(role, govId, mobile);
+      if (res?.user_id) {
+        setUserId(res.user_id);
+        setOtp("");
+        setStep(2);
+      } else {
+        setErrorMsg("Unexpected response from server. Please try again.");
+      }
+    } catch (err) {
+      setErrorMsg(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleVerifyLogin = (e) => {
+  const handleVerifyLogin = async (e) => {
     e.preventDefault();
     if (!otp) {
-      alert("Please enter the OTP.");
+      setErrorMsg("Please enter the OTP.");
       return;
     }
-    login({
-      id: "U-01",
-      name: ROLE_NAMES[role],
-      govId,
-      mobile,
-      role,
-      department: "HQ Secure Division",
-    });
-    navigate("/dashboard");
+    if (!userId) {
+      setErrorMsg("Session expired. Please request a new OTP.");
+      setStep(1);
+      return;
+    }
+
+    setLoading(true);
+    setErrorMsg("");
+
+    try {
+      await verifyOtpWithBackend(userId, otp);
+      navigate("/dashboard");
+    } catch (err) {
+      setErrorMsg(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="login-screen">
-      {/* LEFT: brand */}
       <div className="login-left">
         <Scale className="login-watermark" size={420} strokeWidth={0.6} />
 
@@ -122,7 +142,6 @@ export default function Login() {
         </div>
       </div>
 
-      {/* RIGHT: form */}
       <div className="login-right">
         <div className="login-card">
           <div className="login-card-head">
@@ -138,6 +157,26 @@ export default function Login() {
                 : `Enter the 6-digit OTP sent to ${mobile}`}
             </p>
           </div>
+
+          {errorMsg && (
+            <div
+              style={{
+                background: "var(--danger-bg, #fef2f2)",
+                border: "1px solid var(--danger-border, #fecaca)",
+                color: "var(--danger, #dc2626)",
+                padding: "10px 14px",
+                borderRadius: "var(--radius-sm, 6px)",
+                fontSize: 12.5,
+                marginBottom: 16,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <AlertCircle size={15} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
 
           {step === 1 ? (
             <form onSubmit={handleSendOtp}>
@@ -179,8 +218,9 @@ export default function Login() {
                 </div>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: 8 }}>
-                Send OTP <ArrowRight size={14} />
+              <button type="submit" className="btn btn-primary btn-block" disabled={loading} style={{ marginTop: 8 }}>
+                {loading ? "Sending OTP..." : "Send OTP"}{" "}
+                <ArrowRight size={14} />
               </button>
             </form>
           ) : (
@@ -194,17 +234,9 @@ export default function Login() {
                   borderRadius: "var(--radius-sm)",
                   fontSize: 12,
                   marginBottom: 16,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
                 }}
               >
-                <span>
-                  ✓ OTP Sent to <strong>{mobile}</strong>
-                </span>
-                <span className="mono" style={{ fontWeight: 700 }}>
-                  Demo: 884920
-                </span>
+                ✓ OTP sent to <strong>{mobile}</strong>. Check your SMS and enter the code below.
               </div>
 
               <div className="field">
@@ -215,7 +247,7 @@ export default function Login() {
                     type="text"
                     required
                     maxLength={6}
-                    placeholder="884920"
+                    placeholder="Enter OTP"
                     className="mono"
                     style={{ letterSpacing: "0.2em", fontWeight: 700, fontSize: 16 }}
                     value={otp}
@@ -230,7 +262,12 @@ export default function Login() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setStep(1)}
+                  onClick={() => {
+                    setStep(1);
+                    setUserId(null);
+                    setOtp("");
+                    setErrorMsg("");
+                  }}
                   className="link-gold"
                   style={{ fontSize: 12, background: "none", border: "none", padding: 0 }}
                 >
@@ -238,8 +275,8 @@ export default function Login() {
                 </button>
               </div>
 
-              <button type="submit" className="btn btn-primary btn-block" style={{ marginTop: 12 }}>
-                Verify OTP &amp; Sign In <ShieldCheck size={15} />
+              <button type="submit" className="btn btn-primary btn-block" disabled={loading} style={{ marginTop: 12 }}>
+                {loading ? "Verifying..." : "Verify OTP & Sign In"} <ShieldCheck size={15} />
               </button>
             </form>
           )}

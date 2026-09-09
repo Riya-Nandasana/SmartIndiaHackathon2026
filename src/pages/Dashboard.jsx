@@ -203,10 +203,10 @@ function JudicialDashboard() {
    Administrator — Control center dashboard
    --------------------------------------------------------- */
 function AdminDashboard() {
-  const { users, cases, updateUserStatus } = useApp();
+  const { users, cases, accessRequests, decideAccessRequest } = useApp();
   const navigate = useNavigate();
 
-  const pendingRequests = users.filter((u) => u.status === "Pending");
+  const pendingRequests = accessRequests.filter((r) => r.status === "Pending");
   const unassignedCases = cases.filter((c) => c.assignedForensicOfficer === "To be assigned by Administrator");
 
   return (
@@ -229,25 +229,25 @@ function AdminDashboard() {
         <div className="card">
           <div className="row" style={{ marginBottom: 14 }}>
             <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 17, fontWeight: 700 }}>Pending User Requests</h2>
-            <Link to="/user-approval" className="link-gold" style={{ fontSize: 12 }}>Manage All →</Link>
+            <Link to="/admin-approvals" className="link-gold" style={{ fontSize: 12 }}>Manage All →</Link>
           </div>
 
           {pendingRequests.length === 0 ? (
             <p className="subtext" style={{ fontSize: 12.5 }}>No pending user access requests.</p>
           ) : (
             <div className="stack" style={{ gap: 10 }}>
-              {pendingRequests.map((u) => (
-                <div key={u.id} style={{ padding: 12, background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)" }}>
+              {pendingRequests.map((r) => (
+                <div key={r.id} style={{ padding: 12, background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--radius-sm)" }}>
                   <div className="row">
                     <div>
-                      <p style={{ fontWeight: 700, fontSize: 13 }}>{u.name}</p>
-                      <p style={{ fontSize: 11, color: "var(--subtext)" }}>Requested: {u.role} · {u.department}</p>
+                      <p style={{ fontWeight: 700, fontSize: 13 }}>{r.full_name}</p>
+                      <p style={{ fontSize: 11, color: "var(--subtext)" }}>Requested: {r.requested_role} · {r.department}</p>
                     </div>
                     <div style={{ display: "flex", gap: 6 }}>
-                      <button className="btn btn-success btn-sm" onClick={() => updateUserStatus(u.id, "Active")}>
+                      <button className="btn btn-success btn-sm" onClick={() => decideAccessRequest(r.id, "Approved")}>
                         Approve
                       </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => updateUserStatus(u.id, "Rejected")}>
+                      <button className="btn btn-danger btn-sm" onClick={() => decideAccessRequest(r.id, "Rejected")}>
                         Reject
                       </button>
                     </div>
