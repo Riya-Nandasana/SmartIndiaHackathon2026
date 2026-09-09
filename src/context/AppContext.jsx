@@ -1,8 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { api, ApiError } from "../api/client";
+import { api, ApiError, getErrorMessage } from "../api/client";
 import {
   INITIAL_USERS,
-  INITIAL_CASES,
   INITIAL_EVIDENCE,
   INITIAL_AUDIT_LOGS,
   PERMISSION_MATRIX,
@@ -24,9 +23,9 @@ export function AppProvider({ children }) {
   const [currentUser, setCurrentUser] = useState(() =>
     loadFromStorage("lextrace_user", null)
   );
-  const [cases, setCases] = useState(() =>
-    loadFromStorage("lextrace_cases", INITIAL_CASES)
-  );
+  const [cases, setCases] = useState([]);
+  const [casesLoading, setCasesLoading] = useState(false);
+  const [casesError, setCasesError] = useState(null);
   const [evidenceList, setEvidenceList] = useState(() =>
     loadFromStorage("lextrace_evidence", INITIAL_EVIDENCE)
   );
@@ -37,6 +36,8 @@ export function AppProvider({ children }) {
     loadFromStorage("lextrace_users", INITIAL_USERS)
   );
   const [accessRequests, setAccessRequests] = useState([]);
+  const [accessRequestsLoading, setAccessRequestsLoading] = useState(false);
+  const [accessRequestsError, setAccessRequestsError] = useState(null);
   const [isBackendConnected, setIsBackendConnected] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
@@ -44,8 +45,11 @@ export function AppProvider({ children }) {
     setToken(null);
     setCurrentUser(null);
     setIsBackendConnected(false);
+    setCases([]);
+    setCasesError(null);
     localStorage.removeItem("lextrace_token");
     localStorage.removeItem("lextrace_user");
+    localStorage.removeItem("lextrace_cases");
   }, []);
 
   // Normalize user object for frontend consumption
@@ -80,10 +84,6 @@ export function AppProvider({ children }) {
   }, [currentUser]);
 
   useEffect(() => {
-    localStorage.setItem("lextrace_cases", JSON.stringify(cases));
-  }, [cases]);
-
-  useEffect(() => {
     localStorage.setItem("lextrace_evidence", JSON.stringify(evidenceList));
   }, [evidenceList]);
 
@@ -105,21 +105,73 @@ export function AppProvider({ children }) {
     description: c.description || "",
     priority: c.priority || "Medium",
     status: c.status || "Active",
-    created: c.created_at ? new Date(c.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "Recently",
-    assignedForensicOfficer: c.forensic_officer?.full_name || c.assignedForensicOfficer || "To be assigned by Administrator",
+    created: c.created_at
+      ? new Date(c.created_at).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "—",
+    createdDate: c.created_at
+      ? new Date(c.created_at).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      : "—",
+    assignedForensicOfficer:
+      c.forensic_officer?.full_name ||
+      c.assignedForensicOfficer ||
+      "To be assigned by Administrator",
     forensicOfficerId: c.assigned_forensic_officer || c.forensic_officer?.id,
     legalOfficer: c.legal_officer?.full_name || "Legal Officer",
-    documents: c.documents || [
-      {
-        name: "Initial FIR",
-        file: "FIR.pdf",
-        type: "FIR",
-        access: "Available",
-        hash: "SHA256:c0ffee112233445566778899aabbccdd",
-        status: "Verified",
-      },
-    ],
+    documents: c.documents || [],
   });
+
+  const fetchAccessRequests = useCallback(async () => {
+    if (!token) {
+      setAccessRequests([]);
+      setAccessRequestsError(null);
+      return;
+    }
+
+    setAccessRequestsLoading(true);
+    setAccessRequestsError(null);
+
+    try {
+      const reqsRes = await api.getAccessRequests();
+      setAccessRequests(Array.isArray(reqsRes) ? reqsRes : []);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        setAccessRequests([]);
+        setAccessRequestsError(null);
+      } else {
+        setAccessRequestsError(getErrorMessage(err));
+      }
+    } finally {
+      setAccessRequestsLoading(false);
+    }
+  }, [token]);
+
+  const fetchCases = useCallback(async () => {
+    if (!token) {
+      setCases([]);
+      setCasesError(null);
+      return;
+    }
+
+    setCasesLoading(true);
+    setCasesError(null);
+
+    try {
+      const casesRes = await api.getCases();
+      setCases(Array.isArray(casesRes) ? casesRes.map(mapApiCaseToUi) : []);
+    } catch (err) {
+      setCasesError(getErrorMessage(err));
+    } finally {
+      setCasesLoading(false);
+    }
+  }, [token]);
 
   // Load backend data when authenticated
   const refreshBackendData = useCallback(async () => {
@@ -144,14 +196,7 @@ export function AppProvider({ children }) {
       return;
     }
 
-    try {
-      const casesRes = await api.getCases();
-      if (Array.isArray(casesRes)) {
-        setCases(casesRes.length > 0 ? casesRes.map(mapApiCaseToUi) : []);
-      }
-    } catch (err) {
-      console.warn("Failed to load cases:", err.message);
-    }
+    await fetchCases();
 
     try {
       const usersRes = await api.getUsers();
@@ -174,14 +219,7 @@ export function AppProvider({ children }) {
     }
 
     if (activeUser?.role === "Administrator") {
-      try {
-        const reqsRes = await api.getAccessRequests();
-        if (Array.isArray(reqsRes)) {
-          setAccessRequests(reqsRes);
-        }
-      } catch (err) {
-        console.warn("Failed to load access requests:", err.message);
-      }
+      await fetchAccessRequests();
     }
 
     try {
@@ -202,7 +240,7 @@ export function AppProvider({ children }) {
     } catch (err) {
       console.warn("Failed to load audit logs:", err.message);
     }
-  }, [token, clearSession]);
+  }, [token, clearSession, fetchCases, fetchAccessRequests]);
 
   useEffect(() => {
     if (!token) {
@@ -255,14 +293,7 @@ export function AppProvider({ children }) {
     setIsBackendConnected(true);
     setAuthChecked(true);
 
-    try {
-      const casesRes = await api.getCases();
-      if (Array.isArray(casesRes)) {
-        setCases(casesRes.length > 0 ? casesRes.map(mapApiCaseToUi) : []);
-      }
-    } catch (err) {
-      console.warn("Failed to load cases after login:", err.message);
-    }
+    await fetchCases();
 
     return user;
   };
@@ -317,15 +348,29 @@ export function AppProvider({ children }) {
   };
 
   const decideAccessRequest = async (requestId, action, rejectionReason = null) => {
+    await api.decideAccessRequest(requestId, action, rejectionReason);
+
+    await fetchAccessRequests();
+
     try {
-      await api.decideAccessRequest(requestId, action, rejectionReason);
-    } catch (e) {
-      console.warn("Backend access request decision failed, updating locally:", e.message);
+      const usersRes = await api.getUsers();
+      if (Array.isArray(usersRes)) {
+        setUsers(
+          usersRes.map((u) => ({
+            id: u.id,
+            name: u.full_name,
+            email: u.email,
+            mobile: u.mobile,
+            govId: u.government_id,
+            department: u.department,
+            role: u.role,
+            status: u.status,
+          }))
+        );
+      }
+    } catch (err) {
+      console.warn("Failed to refresh users after approval:", err.message);
     }
-    setAccessRequests((prev) =>
-      prev.map((r) => (r.id === requestId ? { ...r, status: action, rejection_reason: rejectionReason } : r))
-    );
-    addAuditLog(`Decided access request ${requestId}: ${action}`);
   };
 
   const assignForensicOfficer = async (caseId, officerId) => {
@@ -361,6 +406,9 @@ export function AppProvider({ children }) {
         verifyOtpWithBackend,
         logout,
         cases,
+        casesLoading,
+        casesError,
+        fetchCases,
         addCase,
         evidenceList,
         auditLogs,
@@ -368,6 +416,9 @@ export function AppProvider({ children }) {
         users,
         updateUserStatus,
         accessRequests,
+        accessRequestsLoading,
+        accessRequestsError,
+        fetchAccessRequests,
         decideAccessRequest,
         assignForensicOfficer,
         refreshBackendData,
